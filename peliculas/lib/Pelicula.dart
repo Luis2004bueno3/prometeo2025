@@ -1,10 +1,11 @@
 class Pelicula {
 
-
   String titulo;
-  int anio;
+  String anio;
   String descripcion;
   String categoria;
+  String clasi;
+  int puntuacion;
 
 
   Pelicula({
@@ -12,5 +13,11 @@ class Pelicula {
     required this.anio,
     required this.descripcion,
     required this.categoria,
+    required this.clasi,
+    required this.puntuacion,
   });
-}
+
+
+  }
+
+
