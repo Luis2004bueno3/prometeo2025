@@ -1,9 +1,12 @@
 
 //import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:peliculas/Base_datos.dart';
 import 'package:sqflite/sqflite.dart';
 import 'Pelicula.dart';
 //import 'package:provider/provider.dart';
+
+
 
 void main() {
   runApp(MyApp());
@@ -118,29 +121,17 @@ class AnadirDescripcion extends State<AnadirPelicula> {
   int puntuacion=0;
 
   void guardar() async {
-    if (llave.currentState!.validate()) {
-      String titulo = tituloKey.text;
-      String anio = anioKey.text;
-      String descripcion = descripcionKey.text;
-      String categoria = categoriaKey.text;
 
-
-      Pelicula peli = Pelicula(
-          titulo: titulo,
-          anio: anio,
-          descripcion: descripcion,
-          categoria: categoria,
-          clasi: clasiSele,
-          puntuacion: puntuacion,
+    if(llave.currentState!.validate()){
+      Pelicula peli= Pelicula(
+        titulo: tituloKey.text,
+        anio: anioKey.text,
+        descripcion: descripcionKey.text,
+        categoria: categoriaKey.text,
+        clasi: clasiSele,
+        puntuacion: puntuacion,
       );
-
-
-
-      if(clasiSele == "vista") {
-        HomeScreen.peliculasVistas.add(peli);
-      } else if (clasiSele == "no vista") {
-        HomeScreen.pendientesVer.add(peli);
-      }
+      await Base_datos.instance.insertPelicula(peli);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Pelicula guardada exitosamente')),
@@ -151,6 +142,9 @@ class AnadirDescripcion extends State<AnadirPelicula> {
       descripcionKey.clear();
       categoriaKey.clear();
     }
+
+
+
   }
 
 
@@ -238,80 +232,43 @@ class PeliculasVistas extends StatefulWidget {
 }
 
 class vistasState extends State<PeliculasVistas> {
+
+  List<Pelicula> peliculas=[];
+  @override
+  void estadoInicial(){
+    super.initState();
+    cargarPeliculas();
+  }
+
+  Future<void> cargarPeliculas() async  {
+    peliculas = await Base_datos.instance.getPeliculas('vista');
+    setState(() {
+
+    });
+}
+
+  Future<void> eliminarPeliculas(int id) async  {
+    await Base_datos.instance.deletePelicula(id);
+    cargarPeliculas();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Peliculas Vistas")),
       body: ListView.builder(
-        itemCount: HomeScreen.peliculasVistas.length,
+        itemCount: peliculas.length,
         itemBuilder: (context, index) {
-          Pelicula pelicula = HomeScreen.peliculasVistas[index];
+          Pelicula pelicula = peliculas[index];
 
-          double puntuacion = pelicula.puntuacion.toDouble();
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: Card(
-              elevation: 5, // Agrega sombra para hacer que se vea más prominente
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15), // Bordes redondeados
-              ),
-              child: ListTile(
-                contentPadding: EdgeInsets.all(16), // Añadir padding interno
-                title: Text(
-                  pelicula.titulo,
-                  style: TextStyle(
-                    fontSize: 22, // Aumentar el tamaño del título
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 8),
-                    Text(
-                      pelicula.descripcion,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Año: ${pelicula.anio}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          'Puntuación: ${puntuacion.toStringAsFixed(1)}',
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: puntuacion,
-                            min: 0,
-                            max: 10,
-                            divisions: 10,
-                            label: puntuacion.toStringAsFixed(1),
-                            onChanged: (newRating) {
-                              setState(() {
-                                pelicula.puntuacion = newRating.toInt();
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                leading: IconButton(
-                  icon: Icon(Icons.delete),
-                  color: Colors.red,
-                  onPressed: () {
-                    setState(() {
-                      HomeScreen.peliculasVistas.removeAt(index);
-                    });
-                  },
-                ),
+          return Card(
+            child: ListTile(
+              title: Text(pelicula.titulo),
+              subtitle: Text('Año: ${pelicula.anio}\n${pelicula.descripcion}'),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () => eliminarPeliculas(pelicula.id!),
               ),
             ),
           );
@@ -320,6 +277,9 @@ class vistasState extends State<PeliculasVistas> {
     );
   }
 }
+
+
+
 
 
 class PendientesVer extends StatefulWidget {
