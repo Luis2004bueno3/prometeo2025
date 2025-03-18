@@ -44,8 +44,17 @@ class HomeScreen extends StatelessWidget{
             children: [
               Text("Peliculas",
                 style: TextStyle(
-                  fontSize: 100,
-                  color: Colors.white,
+                  fontSize: 75,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Roboto',
+                  shadows: [
+                    Shadow(
+                      offset: Offset(5.0, 5.0),
+                      blurRadius: 10.0,
+                      color: Colors.grey.withOpacity(0.5),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 40),
