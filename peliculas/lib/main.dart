@@ -1,14 +1,15 @@
 
 //import 'package:english_words/english_words.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:peliculas/Base_datos.dart';
-import 'package:sqflite/sqflite.dart';
 import 'Pelicula.dart';
+import 'package:sqflite/sqflite.dart';
 //import 'package:provider/provider.dart';
 
 
 
-void main() {
+void main() async{
   runApp(MyApp());
 }
 
@@ -234,8 +235,9 @@ class PeliculasVistas extends StatefulWidget {
 class vistasState extends State<PeliculasVistas> {
 
   List<Pelicula> peliculas=[];
+
   @override
-  void estadoInicial(){
+  void initState(){
     super.initState();
     cargarPeliculas();
   }
@@ -257,26 +259,46 @@ class vistasState extends State<PeliculasVistas> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Peliculas Vistas")),
-      body: ListView.builder(
-        itemCount: peliculas.length,
-        itemBuilder: (context, index) {
-          Pelicula pelicula = peliculas[index];
+      body: peliculas.isEmpty
+        ? Center(child: Text('No hay peliculas Vistas'))
+        : ListView.builder(
+            itemCount: peliculas.length,
+            itemBuilder: (context, index) {
+               Pelicula pelicula = peliculas[index];
 
-          return Card(
-            child: ListTile(
-              title: Text(pelicula.titulo),
-              subtitle: Text('Año: ${pelicula.anio}\n${pelicula.descripcion}'),
-              trailing: IconButton(
-                icon: Icon(Icons.delete, color: Colors.red),
-                onPressed: () => eliminarPeliculas(pelicula.id!),
-              ),
-            ),
-          );
-        },
+               return Padding(
+                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                 child: Card(
+                   elevation: 5,
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                   child: ListTile(
+                     contentPadding: EdgeInsets.all(16),
+                     title: Text(
+                       pelicula.titulo,
+                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                     ),
+                     subtitle: Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         SizedBox(height: 8),
+                         Text(pelicula.descripcion, style: TextStyle(fontSize: 16)),
+                         SizedBox(height: 8),
+                         Text('Año: ${pelicula.anio}', style: TextStyle(fontSize: 16)),
+                       ],
+                     ),
+                     trailing: IconButton(
+                       icon: Icon(Icons.delete, color: Colors.red),
+                       onPressed: () => eliminarPeliculas(pelicula.id!),
+                     ),
+                   ),
+                 ),
+               );
+            },
       ),
     );
   }
 }
+
 
 
 
@@ -288,35 +310,41 @@ class PendientesVer extends StatefulWidget {
 }
 
 class pendientesState extends State<PendientesVer> {
-  // Función para mover la película a la lista de vistas
-  void moverAPeliculasVistas(int index) {
-    // Obtener la película que vamos a mover
-    Pelicula pelicula = HomeScreen.pendientesVer[index];
+  List<Pelicula> peliculas=[];
 
-    // Añadirla a la lista de películas vistas
-    HomeScreen.peliculasVistas.add(pelicula);
+  @override
+  void initState(){
+    super.initState();
+    cargarPeliculas();
+  }
 
-    // Eliminarla de la lista de pendientes
-    HomeScreen.pendientesVer.removeAt(index);
+  Future<void> cargarPeliculas() async{
+    peliculas = await Base_datos.instance.getPeliculas('no vista');
+    setState(() {
+    });
+  }
 
-    // Actualizar la UI
-    setState(() {});
+  Future<void> moverAVistas(int id) async{
+    await Base_datos.instance.updatePeliculasClasificacion(id, 'vista');
+    cargarPeliculas();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Pendientes de ver")),
-      body: ListView.builder(
-        itemCount: HomeScreen.pendientesVer.length,
-        itemBuilder: (context, index) {
-          Pelicula pelicula = HomeScreen.pendientesVer[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: Card(
-              elevation: 5, // Agrega sombra para hacer que se vea más prominente
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15), // Bordes redondeados
+      body: peliculas.isEmpty
+        ? Center(child: Text('No hay peliculas pendientes por ver'))
+        : ListView.builder(
+            itemCount: peliculas.length,
+            itemBuilder: (context, index) {
+              Pelicula pelicula = peliculas[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                child: Card(
+                  elevation: 5, // Agrega sombra para hacer que se vea más prominente
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15), // Bordes redondeados
               ),
               child: ListTile(
                 contentPadding: EdgeInsets.all(16), // Añadir padding interno
@@ -342,31 +370,23 @@ class pendientesState extends State<PendientesVer> {
                     ),
                   ],
                 ),
-                trailing: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      pelicula.anio,
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        moverAPeliculasVistas(index); // Llamar a la función para mover la película
-                      },
+                trailing: ElevatedButton(
+                     onPressed:  () => moverAVistas(pelicula.id!),
                       child: Text("Marcar como vista"),
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                       ),
                     ),
-                  ],
                 ),
               ),
-            ),
-          );
+            );
         },
       ),
     );
+
+
   }
+
 }
+
 

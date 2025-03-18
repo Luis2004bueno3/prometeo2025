@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'Pelicula.dart';
+
 
 class Base_datos {
   static final Base_datos instance = Base_datos._init();
@@ -10,6 +12,10 @@ class Base_datos {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
+
+
+    if(kIsWeb) databaseFactory=databaseFactory;
+
     _database = await _initDB('peliculas.db');
     return _database!;
   }
@@ -41,7 +47,8 @@ class Base_datos {
 
   Future<int> insertPelicula(Pelicula pelicula) async {
     final db = await instance.database;
-    return await db.insert('peliculas', pelicula.toMap());
+    final id=  db.insert('peliculas', pelicula.toMap());
+    return id;
   }
 
   Future<List<Pelicula>> getPeliculas(String clasificacion) async {
@@ -54,8 +61,20 @@ class Base_datos {
     return result.map((json) => Pelicula.fromMap(json)).toList();
   }
 
-  Future<int> deletePelicula(int id) async {
+  Future<void> deletePelicula(int id) async {
     final db = await instance.database;
-    return await db.delete('peliculas', where: 'id = ?', whereArgs: [id]);
+    await db.delete('peliculas', where: 'id = ?', whereArgs: [id]);
   }
+
+
+  Future<void> updatePeliculasClasificacion(int id, String nuevaClasificacion) async {
+    final db = await database; // Obtener la base de datos
+    await db.update(
+      'peliculas', // Nombre de la tabla en la BD
+      {'clasi': nuevaClasificacion}, // Campos a actualizar
+      where: 'id = ?', // Condición para actualizar la película específica
+      whereArgs: [id], // Parámetro para evitar SQL Injection
+    );
+  }
+
 }
